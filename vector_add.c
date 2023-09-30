@@ -30,45 +30,47 @@ int main(void) {
     double start, finish, elapsed;
     start = clock();
 
-    int n;
-    double *x, *y, *z;
+   int n;
+   double *x, *y, *z;
 
-    Read_n(&n);  // Read the vector size from the user
-    Allocate_vectors(&x, &y, &z, n);
+   n = 10000000;
+   Allocate_vectors(&x, &y, &z, n);
    
-    Read_vector(x, n, "x");
-    Read_vector(y, n, "y");
+   Read_vector(x, n, "x");
+   Read_vector(y, n, "y");
    
-    Vector_sum(x, y, z, n);
+   Vector_sum(x, y, z, n);
 
-    printf("\nThe first ten elements of x are: \n");
-    for (int i = 0; i < 10 && i < n; i++) {
-        printf("%f ", x[i]);
+   // Print_vector(z, n, "The sum is");
+
+   printf("\nThe first ten elements of x are: \n");
+    for (int i = 0; i < 10; i++) {
+     printf("%f ", x[i]);
     }
 
     printf("\nThe first ten elements of y are: \n");
-    for (int i = 0; i < 10 && i < n; i++) {
-        printf("%f ", y[i]);
+    for (int i = 0; i < 10; i++) {
+     printf("%f ", y[i]);
     }
 
     printf("\nThe first ten elements of z are: \n");
-    for (int i = 0; i < 10 && i < n; i++) {
-        printf("%f ", z[i]);
+    for (int i = 0; i < 10; i++) {
+     printf("%f ", z[i]);
     }
 
-    printf("\nThe last ten elements of x are: \n");
-    for (int i = n-10; i < n && i >= 0; i++) {
-        printf("%f ", x[i]);
+    printf("The last ten elements of x are: \n");
+    for (int i = n-10; i < n; i++) {
+     printf("%f ", x[i]);
     }
 
     printf("\nThe last ten elements of y are: \n");
-    for (int i = n-10; i < n && i >= 0; i++) {
-        printf("%f ", y[i]);
+    for (int i = n-10; i < n; i++) {
+     printf("%f ", y[i]);
     }
 
     printf("\nThe last ten elements of z are: \n");
-    for (int i = n-10; i < n && i >= 0; i++) {
-        printf("%f ", z[i]);
+    for (int i = n-10; i < n; i++) {
+     printf("%f ", z[i]);
     }
 
     finish = clock();
@@ -76,13 +78,13 @@ int main(void) {
     elapsed = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("\nTime elapsed: %f seconds\n", elapsed);
 
-    free(x);
-    free(y);
-    free(z);
+    
+   free(x);
+   free(y);
+   free(z);
 
-    return 0;
-}
-
+   return 0;
+}  /* main */
 
 /*---------------------------------------------------------------------
  * Function:  Read_n
