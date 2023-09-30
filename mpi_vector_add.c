@@ -63,12 +63,9 @@ int main(void) {
    Allocate_vectors(&local_x, &local_y, &local_z, local_n, comm);
    
    Read_vector(local_x, local_n, n, "x", my_rank, comm);
-//    Print_vector(local_x, local_n, n, "x is", my_rank, comm);
-//    Read_vector(local_y, local_n, n, "y", my_rank, comm);
-//    Print_vector(local_y, local_n, n, "y is", my_rank, comm);
    
    Parallel_vector_sum(local_x, local_y, local_z, local_n);
-   Print_vector(local_z, local_n, n, "The sum is", my_rank, comm);
+//    Print_vector(local_z, local_n, n, "The sum is", my_rank, comm); //NOTA: Se comenta porque da segmentation fault
 
     printf("\nThe first ten elements of x are: \n");
     for (int i = 0; i < 10; i++) {

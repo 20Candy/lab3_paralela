@@ -41,7 +41,7 @@ int main(void) {
    
    Vector_sum(x, y, z, n);
 
-   // Print_vector(z, n, "The sum is");
+   // Print_vector(z, n, "The sum is"); //NOTA: Se comenta porque da segmentation fault
 
    printf("\nThe first ten elements of x are: \n");
     for (int i = 0; i < 10; i++) {
