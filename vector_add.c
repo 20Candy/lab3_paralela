@@ -27,13 +27,15 @@ void Vector_sum(double x[], double y[], double z[], int n);
 
 /*---------------------------------------------------------------------*/
 int main(void) {
-    double start, finish, elapsed;
-   start = clock();
-
    int n;
    double *x, *y, *z;                  // X e Y son los vectores de entrada y Z es el vector de salida
    
-   n = 100000;                         // Ejercicio 2: Crear dos vectores de al menos 100,000 elementos generados de forma aleatoria
+   //n = 100000;                         // Ejercicio 2: Crear dos vectores de al menos 100,000 elementos generados de forma aleatoria
+   n = 200000000;                        // 200,000,000 para lograr que se tarde 5 seg aproximadamente
+
+   double start = clock();
+
+   Read_n(&n);                         // Se lee el tamaño de los vectores
 
    Allocate_vectors(&x, &y, &z, n);    // Se le asigna memoria a los vectores. 
    
@@ -42,8 +44,8 @@ int main(void) {
    
    Vector_sum(x, y, z, n);             // Se suman los vectores x e y y se guarda el resultado en el vector z
 
-   finish = clock();
-   elapsed = (double)(finish - start) / CLOCKS_PER_SEC;
+   double finish = clock();
+   double elapsed = (double)(finish - start) / CLOCKS_PER_SEC;
 
    printf("Size of vectors: %d\n", n); // Se imprime el tamaño de los vectores (n)
 
@@ -75,8 +77,6 @@ int main(void) {
  * Errors:    If n <= 0, the program terminates
  */
 void Read_n(int* n_p /* out */) {
-   printf("What's the order of the vectors?\n");
-   scanf("%d", n_p);
    if (*n_p <= 0) {
       fprintf(stderr, "Order should be positive\n");
       exit(-1);

@@ -43,69 +43,69 @@ void Parallel_vector_sum(double local_x[], double local_y[],
 
 /*-------------------------------------------------------------------*/
 int main(void) {
-    double start, finish, elapsed;
-    start = clock();
+   int n, local_n;                              // n = tamaño de los vectores, local_n = tamaño de los vectores locales
+   int comm_sz, my_rank;                        // comm_sz = número de procesos, my_rank = rango del proceso
+   MPI_Comm comm;     
 
-   int n, local_n;
-   int comm_sz, my_rank;
-   double *local_x, *local_y, *local_z;
-   MPI_Comm comm;
+   double *local_x, *local_y, *local_z;         // vectores locales
+   double *x, *y, *z;                           // VECTORES GLOBALES. Se utiliza para combinar los vectores locales.
 
-   MPI_Init(NULL, NULL);
+   MPI_Init(NULL, NULL);                        // Inicializa el ambiente de MPI
    comm = MPI_COMM_WORLD;
-   MPI_Comm_size(comm, &comm_sz);
-   MPI_Comm_rank(comm, &my_rank);
+   MPI_Comm_size(comm, &comm_sz);               // Obtiene el número de procesos
+   MPI_Comm_rank(comm, &my_rank);               // Obtiene el rango del proceso
 
-   Read_n(&n, &local_n, my_rank, comm_sz, comm);
-#  ifdef DEBUG
-   printf("Proc %d > n = %d, local_n = %d\n", my_rank, n, local_n);
-#  endif
-   Allocate_vectors(&local_x, &local_y, &local_z, local_n, comm);
+   //n = 100000;                                  // Ejercicio 2: Crear dos vectores de al menos 100,000 elementos generados de forma aleatoria
+   n = 200000000;                               // 200,000,000 para lograr que se tarde 5 seg aproximadamente
+
+   double start = MPI_Wtime();
+
+   Read_n(&n, &local_n, my_rank, comm_sz, comm);                        // Se lee el tamaño de los vectores (n) y se distribuye entre los procesos
+
+   Allocate_vectors(&local_x, &local_y, &local_z, local_n, comm);       // Se le asigna memoria a los vectores locales
+
+   Read_vector(local_x, local_n, n, "x", my_rank, comm);                // Se llenan los vectores con números aleatorios
+   Read_vector(local_y, local_n, n, "y", my_rank, comm);                // Se llenan los vectores con números aleatorios
    
-   Read_vector(local_x, local_n, n, "x", my_rank, comm);
+   Parallel_vector_sum(local_x, local_y, local_z, local_n);             // Se suman los vectores x e y y se guarda el resultado en el vector z
+
+   double finish = MPI_Wtime();
+   double elapsed = finish - start;
+
+   // SE COMBINAN LOS VECTORES LOCALES EN UNO SOLO DESPUES DE HABER SUMADO
+   Allocate_vectors(&x, &y, &z, n, comm);       // Se le asigna memoria a los vectores globales
+   MPI_Gather(local_x, local_n, MPI_DOUBLE, x, local_n, MPI_DOUBLE, 0, comm);
+   MPI_Gather(local_y, local_n, MPI_DOUBLE, y, local_n, MPI_DOUBLE, 0, comm);
+   MPI_Gather(local_z, local_n, MPI_DOUBLE, z, local_n, MPI_DOUBLE, 0, comm);
    
-   Parallel_vector_sum(local_x, local_y, local_z, local_n);
+   if (my_rank == 0){
 
-    printf("\nThe first ten elements of x are: \n");
-    for (int i = 0; i < 10; i++) {
-     printf("%f ", local_x[i]);
-    }
+      printf("Size of vectors: %d\n", n); // Se imprime el tamaño de los vectores (n)
 
-    printf("\nThe first ten elements of y are: \n");
-    for (int i = 0; i < 10; i++) {
-     printf("%f ", local_y[i]);
-    }
+      printf("X\t\t|\tY\t\t|\tZ (Resultado)\n\n");            // Se imprimen los vectores
+      for (int i = 0; i < 10; i++) {
+            printf("%f\t|\t%f\t|\t%f\n", x[i], y[i], z[i]);
+      }
 
-    printf("\nThe first ten elements of z are: \n");
-    for (int i = 0; i < 10; i++) {
-     printf("%f ", local_z[i]);
-    }
+      printf("\t\n...\n\n");
 
-    printf("The last ten elements of x are: \n");
-    for (int i = local_n-10; i < local_n; i++) {
-     printf("%f ", local_x[i]);
-    }
+      for (int i = n-10; i < n; i++) {
+            printf("%f\t|\t%f\t|\t%f\n", x[i], y[i], z[i]);
+      }
 
-    printf("\nThe last ten elements of y are: \n");
-    for (int i = local_n-10; i < local_n; i++) {
-     printf("%f ", local_y[i]);
-    }
+      printf("\nTime elapsed: %f seconds\n", elapsed);
 
-    printf("\nThe last ten elements of z are: \n");
-    for (int i = local_n-10; i < local_n; i++) {
-     printf("%f ", local_z[i]);
-    }
+   }
 
+   free(x);
+   free(y);
+   free(z);
+   
    free(local_x);
    free(local_y);
    free(local_z);
 
    MPI_Finalize();
-
-    finish = clock();
-    elapsed = (double)(finish - start) / CLOCKS_PER_SEC;
-
-    printf("\nTime elapsed: %f seconds\n", elapsed);
 
    return 0;
 }  /* main */
@@ -167,14 +167,10 @@ void Read_n(
       int       my_rank    /* in  */, 
       int       comm_sz    /* in  */,
       MPI_Comm  comm       /* in  */) {
+
    int local_ok = 1;
    char *fname = "Read_n";
    
-   if (my_rank == 0) {
-    *n_p = 10000000;
-    //   printf("What's the order of the vectors?\n");
-    //   scanf("%d", n_p);
-   }
    MPI_Bcast(n_p, 1, MPI_INT, 0, comm);
    if (*n_p <= 0 || *n_p % comm_sz != 0) local_ok = 0;
    Check_for_error(local_ok, fname,
