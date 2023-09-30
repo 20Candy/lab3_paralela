@@ -5,7 +5,7 @@
  *           illustrates the use of MPI_Scatter and MPI_Gather.
  *
  * Compile:  mpicc -g -Wall -o mpi_vector_add mpi_vector_add.c
- * Run:      mpiexec -n <comm_sz> ./vector_add
+ * Run:      mpiexec -n <comm_sz> ./mpi_vector_add
  *
  * Input:    The order of the vectors, n, and the vectors x and y
  * Output:   The sum vector z = x+y
@@ -65,7 +65,6 @@ int main(void) {
    Read_vector(local_x, local_n, n, "x", my_rank, comm);
    
    Parallel_vector_sum(local_x, local_y, local_z, local_n);
-//    Print_vector(local_z, local_n, n, "The sum is", my_rank, comm); //NOTA: Se comenta porque da segmentation fault
 
     printf("\nThe first ten elements of x are: \n");
     for (int i = 0; i < 10; i++) {

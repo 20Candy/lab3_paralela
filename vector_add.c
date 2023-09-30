@@ -28,56 +28,37 @@ void Vector_sum(double x[], double y[], double z[], int n);
 /*---------------------------------------------------------------------*/
 int main(void) {
     double start, finish, elapsed;
-    start = clock();
+   start = clock();
 
    int n;
-   double *x, *y, *z;
-
-   n = 10000000;
-   Allocate_vectors(&x, &y, &z, n);
+   double *x, *y, *z;                  // X e Y son los vectores de entrada y Z es el vector de salida
    
-   Read_vector(x, n, "x");
-   Read_vector(y, n, "y");
+   n = 100000;                         // Ejercicio 2: Crear dos vectores de al menos 100,000 elementos generados de forma aleatoria
+
+   Allocate_vectors(&x, &y, &z, n);    // Se le asigna memoria a los vectores. 
    
-   Vector_sum(x, y, z, n);
+   Read_vector(x, n, "x");             // Se llenan los vectores con números aleatorios
+   Read_vector(y, n, "y");             // Se llenan los vectores con números aleatorios
+   
+   Vector_sum(x, y, z, n);             // Se suman los vectores x e y y se guarda el resultado en el vector z
 
-   // Print_vector(z, n, "The sum is"); //NOTA: Se comenta porque da segmentation fault
+   finish = clock();
+   elapsed = (double)(finish - start) / CLOCKS_PER_SEC;
 
-   printf("\nThe first ten elements of x are: \n");
-    for (int i = 0; i < 10; i++) {
-     printf("%f ", x[i]);
-    }
+   printf("Size of vectors: %d\n", n); // Se imprime el tamaño de los vectores (n)
 
-    printf("\nThe first ten elements of y are: \n");
-    for (int i = 0; i < 10; i++) {
-     printf("%f ", y[i]);
-    }
+   printf("X\t\t|\tY\t\t|\tZ (Resultado)\n\n");            // Se imprimen los vectores
+   for (int i = 0; i < 10; i++) {
+      printf("%f\t|\t%f\t|\t%f\n", x[i], y[i], z[i]);
+   }
 
-    printf("\nThe first ten elements of z are: \n");
-    for (int i = 0; i < 10; i++) {
-     printf("%f ", z[i]);
-    }
+   printf("\t\n...\n\n");
 
-    printf("The last ten elements of x are: \n");
-    for (int i = n-10; i < n; i++) {
-     printf("%f ", x[i]);
-    }
+   for (int i = n-10; i < n; i++) {
+      printf("%f\t|\t%f\t|\t%f\n", x[i], y[i], z[i]);
+   }
 
-    printf("\nThe last ten elements of y are: \n");
-    for (int i = n-10; i < n; i++) {
-     printf("%f ", y[i]);
-    }
-
-    printf("\nThe last ten elements of z are: \n");
-    for (int i = n-10; i < n; i++) {
-     printf("%f ", z[i]);
-    }
-
-    finish = clock();
-
-    elapsed = (double)(finish - start) / CLOCKS_PER_SEC;
-    printf("\nTime elapsed: %f seconds\n", elapsed);
-
+   printf("\nTime elapsed: %f seconds\n", elapsed);
     
    free(x);
    free(y);
@@ -126,7 +107,7 @@ void Allocate_vectors(
 
 /*---------------------------------------------------------------------
  * Function:  Read_vector
- * Purpose:   Read a vector from stdin
+ * Purpose:   Assign random values to a vector
  * In args:   n:  order of the vector
  *            vec_name:  name of vector (e.g., x)
  * Out arg:   a:  the vector to be read in
@@ -135,9 +116,10 @@ void Read_vector(
       double  a[]         /* out */, 
       int     n           /* in  */, 
       char    vec_name[]  /* in  */) {
+
    int i;
    for (i = 0; i < n; i++)
-    a[i] = rand() % 1000;
+      a[i] = rand() % 1000;            // Ejercicio 2: Se genera un número aleatorio entre 0 y 1000 para cada elemento del vector
 }  /* Read_vector */  
 
 /*---------------------------------------------------------------------
