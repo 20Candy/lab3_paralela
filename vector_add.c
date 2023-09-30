@@ -43,9 +43,6 @@ int main(void) {
 
    Print_vector(z, n, "The sum is");
 
-   free(x);
-   free(y);
-   free(z);
    
    printf("\nThe first ten elements of x are: \n");
     for (int i = 0; i < 10; i++) {
@@ -81,6 +78,11 @@ int main(void) {
 
     elapsed = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("\nTime elapsed: %f seconds\n", elapsed);
+
+    
+   free(x);
+   free(y);
+   free(z);
 
    return 0;
 }  /* main */
