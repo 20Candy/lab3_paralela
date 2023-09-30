@@ -14,9 +14,9 @@
  *
  * IPP:      Section 3.4.6 (p. 109)
  */
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <omp.h>
 #include <time.h>
 
 void Read_n(int* n_p);
@@ -24,51 +24,66 @@ void Allocate_vectors(double** x_pp, double** y_pp, double** z_pp, int n);
 void Read_vector(double a[], int n, char vec_name[]);
 void Print_vector(double b[], int n, char title[]);
 void Vector_sum(double x[], double y[], double z[], int n);
-void Generate_random_vector(double v[], int n);
 
 /*---------------------------------------------------------------------*/
 int main(void) {
+    double start, finish, elapsed;
+    start = clock();
+
    int n;
    double *x, *y, *z;
-   double initial = omp_get_wtime();
-   srand(time(NULL));
 
-   n = 1000000000;
+   n = 10000000;
    Allocate_vectors(&x, &y, &z, n);
    
-   Generate_random_vector(x, n);
-   Generate_random_vector(y, n);
-
+   Read_vector(x, n, "x");
+   Read_vector(y, n, "y");
+   
    Vector_sum(x, y, z, n);
 
-   Print_vector(x, 10, "\n\nFirst 10 elements of x");
-   Print_vector(y, 10, "First 10 elements of y");
-   Print_vector(z, 10, "First 10 elements of z");
-
-   Print_vector(x + n - 10, 10, "\n\nLast 10 elements of x");
-   Print_vector(y + n - 10, 10, "Last 10 elements of y");
-   Print_vector(z + n - 10, 10, "Last 10 elements of z");
-
-   double final = omp_get_wtime();
-   printf("\n\nTook %f ms to run\n", (final-initial));
+   Print_vector(z, n, "The sum is");
 
    free(x);
    free(y);
    free(z);
+   
+   printf("\nThe first ten elements of x are: \n");
+    for (int i = 0; i < 10; i++) {
+     printf("%f ", x[i]);
+    }
+
+    printf("\nThe first ten elements of y are: \n");
+    for (int i = 0; i < 10; i++) {
+     printf("%f ", y[i]);
+    }
+
+    printf("\nThe first ten elements of z are: \n");
+    for (int i = 0; i < 10; i++) {
+     printf("%f ", z[i]);
+    }
+
+    printf("The last ten elements of x are: \n");
+    for (int i = n-10; i < n; i++) {
+     printf("%f ", x[i]);
+    }
+
+    printf("\nThe last ten elements of y are: \n");
+    for (int i = n-10; i < n; i++) {
+     printf("%f ", y[i]);
+    }
+
+    printf("\nThe last ten elements of z are: \n");
+    for (int i = n-10; i < n; i++) {
+     printf("%f ", z[i]);
+    }
+
+    finish = clock();
+
+    elapsed = (double)(finish - start) / CLOCKS_PER_SEC;
+    printf("\nTime elapsed: %f seconds\n", elapsed);
 
    return 0;
 }  /* main */
-
-
-/*---------------------------------------------------------------------
- * Function:  Generate_random_vector
- * Purpose:   Generate a vector of length n with random values from 0 to 100
- */
-void Generate_random_vector(double v[], int n) {
-   for (int i = 0; i < n; i++) {
-      v[i] = rand() % 100;
-   }
-}
 
 /*---------------------------------------------------------------------
  * Function:  Read_n
@@ -120,9 +135,8 @@ void Read_vector(
       int     n           /* in  */, 
       char    vec_name[]  /* in  */) {
    int i;
-   printf("Enter the vector %s\n", vec_name);
    for (i = 0; i < n; i++)
-      scanf("%lf", &a[i]);
+    a[i] = rand() % 1000;
 }  /* Read_vector */  
 
 /*---------------------------------------------------------------------

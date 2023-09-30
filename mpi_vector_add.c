@@ -10,10 +10,10 @@
  * Input:    The order of the vectors, n, and the vectors x and y
  * Output:   The sum vector z = x+y
  *
- * Notes:
+ * Notes:     
  * 1.  The order of the vectors, n, should be evenly divisible
  *     by comm_sz
- * 2.  DEBUG compile flag.
+ * 2.  DEBUG compile flag.    
  * 3.  This program does fairly extensive error checking.  When
  *     an error is detected, a message is printed and the processes
  *     quit.  Errors detected are incorrect values of the vector
@@ -24,31 +24,32 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <omp.h>
-#include <time.h>
 #include <mpi.h>
+#include <time.h>
 
-void Check_for_error(int local_ok, char fname[], char message[],
+void Check_for_error(int local_ok, char fname[], char message[], 
       MPI_Comm comm);
-void Read_n(int* n_p, int* local_n_p, int my_rank, int comm_sz,
+void Read_n(int* n_p, int* local_n_p, int my_rank, int comm_sz, 
       MPI_Comm comm);
 void Allocate_vectors(double** local_x_pp, double** local_y_pp,
       double** local_z_pp, int local_n, MPI_Comm comm);
-void Read_vector(double local_a[], int local_n, int n, char vec_name[],
+void Read_vector(double local_a[], int local_n, int n, char vec_name[], 
       int my_rank, MPI_Comm comm);
-void Print_vector(double local_b[], int local_n, int n, char title[],
+void Print_vector(double local_b[], int local_n, int n, char title[], 
       int my_rank, MPI_Comm comm);
-void Parallel_vector_sum(double local_x[], double local_y[],
+void Parallel_vector_sum(double local_x[], double local_y[], 
       double local_z[], int local_n);
-void Generate_random_vector(double v[], int n);
+
 
 /*-------------------------------------------------------------------*/
 int main(void) {
+    double start, finish, elapsed;
+    start = clock();
+
    int n, local_n;
    int comm_sz, my_rank;
    double *local_x, *local_y, *local_z;
    MPI_Comm comm;
-   double tstart, tend;
 
    MPI_Init(NULL, NULL);
    comm = MPI_COMM_WORLD;
@@ -56,27 +57,48 @@ int main(void) {
    MPI_Comm_rank(comm, &my_rank);
 
    Read_n(&n, &local_n, my_rank, comm_sz, comm);
+#  ifdef DEBUG
+   printf("Proc %d > n = %d, local_n = %d\n", my_rank, n, local_n);
+#  endif
    Allocate_vectors(&local_x, &local_y, &local_z, local_n, comm);
-   srand(time(NULL) + my_rank);
-   tstart = MPI_Wtime();
    
-   Generate_random_vector(local_x, local_n);
-   Generate_random_vector(local_y, local_n);
-
+   Read_vector(local_x, local_n, n, "x", my_rank, comm);
+//    Print_vector(local_x, local_n, n, "x is", my_rank, comm);
+//    Read_vector(local_y, local_n, n, "y", my_rank, comm);
+//    Print_vector(local_y, local_n, n, "y is", my_rank, comm);
+   
    Parallel_vector_sum(local_x, local_y, local_z, local_n);
+   Print_vector(local_z, local_n, n, "The sum is", my_rank, comm);
 
-   tend = MPI_Wtime();
+    printf("\nThe first ten elements of x are: \n");
+    for (int i = 0; i < 10; i++) {
+     printf("%f ", local_x[i]);
+    }
 
-   Print_vector(local_x, 10, n, "\n\nFirst 10 elements of x", my_rank, comm);
-   Print_vector(local_y, 10, n, "First 10 elements of y", my_rank, comm);
-   Print_vector(local_z, 10, n,  "First 10 elements of z", my_rank, comm);
+    printf("\nThe first ten elements of y are: \n");
+    for (int i = 0; i < 10; i++) {
+     printf("%f ", local_y[i]);
+    }
 
-   Print_vector(local_x, 10, n, "\n\nLast 10 elements of x", my_rank, comm);
-   Print_vector(local_y, 10, n, "First 10 elements of y", my_rank, comm);
-   Print_vector(local_z, 10, n,  "Last 10 elements of z", my_rank, comm);
+    printf("\nThe first ten elements of z are: \n");
+    for (int i = 0; i < 10; i++) {
+     printf("%f ", local_z[i]);
+    }
 
-   if(my_rank==0)
-      printf("\n\nTook %f ms to run\n", (tend-tstart));
+    printf("The last ten elements of x are: \n");
+    for (int i = local_n-10; i < local_n; i++) {
+     printf("%f ", local_x[i]);
+    }
+
+    printf("\nThe last ten elements of y are: \n");
+    for (int i = local_n-10; i < local_n; i++) {
+     printf("%f ", local_y[i]);
+    }
+
+    printf("\nThe last ten elements of z are: \n");
+    for (int i = local_n-10; i < local_n; i++) {
+     printf("%f ", local_z[i]);
+    }
 
    free(local_x);
    free(local_y);
@@ -84,18 +106,13 @@ int main(void) {
 
    MPI_Finalize();
 
+    finish = clock();
+    elapsed = (double)(finish - start) / CLOCKS_PER_SEC;
+
+    printf("\nTime elapsed: %f seconds\n", elapsed);
+
    return 0;
 }  /* main */
-
-/*---------------------------------------------------------------------
- * Function:  Generate_random_vector
- * Purpose:   Generate a vector of length n with random values from 0 to 100
- */
-void Generate_random_vector(double v[], int n) {
-   for (int i = 0; i < n; i++) {
-      v[i] = rand() % 100;
-   }
-}
 
 /*-------------------------------------------------------------------
  * Function:  Check_for_error
@@ -114,9 +131,9 @@ void Generate_random_vector(double v[], int n) {
  *    should be MPI_COMM_WORLD.
  */
 void Check_for_error(
-      int       local_ok   /* in */,
+      int       local_ok   /* in */, 
       char      fname[]    /* in */,
-      char      message[]  /* in */,
+      char      message[]  /* in */, 
       MPI_Comm  comm       /* in */) {
    int ok;
 
@@ -125,7 +142,7 @@ void Check_for_error(
       int my_rank;
       MPI_Comm_rank(comm, &my_rank);
       if (my_rank == 0) {
-         fprintf(stderr, "Proc %d > In %s, %s\n", my_rank, fname,
+         fprintf(stderr, "Proc %d > In %s, %s\n", my_rank, fname, 
                message);
          fflush(stderr);
       }
@@ -149,17 +166,19 @@ void Check_for_error(
  * Errors:    n should be positive and evenly divisible by comm_sz
  */
 void Read_n(
-      int*      n_p        /* out */,
-      int*      local_n_p  /* out */,
-      int       my_rank    /* in  */,
+      int*      n_p        /* out */, 
+      int*      local_n_p  /* out */, 
+      int       my_rank    /* in  */, 
       int       comm_sz    /* in  */,
       MPI_Comm  comm       /* in  */) {
-
    int local_ok = 1;
    char *fname = "Read_n";
    
-   if (my_rank == 0) 
-      *n_p = 1000000000;
+   if (my_rank == 0) {
+    *n_p = 10000000;
+    //   printf("What's the order of the vectors?\n");
+    //   scanf("%d", n_p);
+   }
    MPI_Bcast(n_p, 1, MPI_INT, 0, comm);
    if (*n_p <= 0 || *n_p % comm_sz != 0) local_ok = 0;
    Check_for_error(local_ok, fname,
@@ -179,9 +198,9 @@ void Read_n(
  * Errors:    One or more of the calls to malloc fails
  */
 void Allocate_vectors(
-      double**   local_x_pp  /* out */,
+      double**   local_x_pp  /* out */, 
       double**   local_y_pp  /* out */,
-      double**   local_z_pp  /* out */,
+      double**   local_z_pp  /* out */, 
       int        local_n     /* in  */,
       MPI_Comm   comm        /* in  */) {
    int local_ok = 1;
@@ -191,9 +210,9 @@ void Allocate_vectors(
    *local_y_pp = malloc(local_n*sizeof(double));
    *local_z_pp = malloc(local_n*sizeof(double));
 
-   if (*local_x_pp == NULL || *local_y_pp == NULL ||
+   if (*local_x_pp == NULL || *local_y_pp == NULL || 
        *local_z_pp == NULL) local_ok = 0;
-   Check_for_error(local_ok, fname, "Can't allocate local vector(s)",
+   Check_for_error(local_ok, fname, "Can't allocate local vector(s)", 
          comm);
 }  /* Allocate_vectors */
 
@@ -212,16 +231,16 @@ void Allocate_vectors(
  * Errors:     if the malloc on process 0 for temporary storage
  *             fails the program terminates
  *
- * Note:
+ * Note: 
  *    This function assumes a block distribution and the order
  *   of the vector evenly divisible by comm_sz.
  */
 void Read_vector(
-      double    local_a[]   /* out */,
-      int       local_n     /* in  */,
+      double    local_a[]   /* out */, 
+      int       local_n     /* in  */, 
       int       n           /* in  */,
       char      vec_name[]  /* in  */,
-      int       my_rank     /* in  */,
+      int       my_rank     /* in  */, 
       MPI_Comm  comm        /* in  */) {
 
    double* a = NULL;
@@ -232,20 +251,21 @@ void Read_vector(
    if (my_rank == 0) {
       a = malloc(n*sizeof(double));
       if (a == NULL) local_ok = 0;
-      Check_for_error(local_ok, fname, "Can't allocate temporary vector",
+      Check_for_error(local_ok, fname, "Can't allocate temporary vector", 
             comm);
+    //   printf("Enter the vector %s\n", vec_name);
       for (i = 0; i < n; i++)
-         a[i] = i;
+         a[i] = rand() % 1000;
       MPI_Scatter(a, local_n, MPI_DOUBLE, local_a, local_n, MPI_DOUBLE, 0,
          comm);
       free(a);
    } else {
-      Check_for_error(local_ok, fname, "Can't allocate temporary vector",
+      Check_for_error(local_ok, fname, "Can't allocate temporary vector", 
             comm);
       MPI_Scatter(a, local_n, MPI_DOUBLE, local_a, local_n, MPI_DOUBLE, 0,
          comm);
    }
-}  /* Read_vector */
+}  /* Read_vector */  
 
 
 /*-------------------------------------------------------------------
@@ -266,10 +286,10 @@ void Read_vector(
  *    processes
  */
 void Print_vector(
-      double    local_b[]  /* in */,
-      int       local_n    /* in */,
-      int       n          /* in */,
-      char      title[]    /* in */,
+      double    local_b[]  /* in */, 
+      int       local_n    /* in */, 
+      int       n          /* in */, 
+      char      title[]    /* in */, 
       int       my_rank    /* in */,
       MPI_Comm  comm       /* in */) {
 
@@ -281,17 +301,17 @@ void Print_vector(
    if (my_rank == 0) {
       b = malloc(n*sizeof(double));
       if (b == NULL) local_ok = 0;
-      Check_for_error(local_ok, fname, "Can't allocate temporary vector",
+      Check_for_error(local_ok, fname, "Can't allocate temporary vector", 
             comm);
       MPI_Gather(local_b, local_n, MPI_DOUBLE, b, local_n, MPI_DOUBLE,
             0, comm);
       printf("%s\n", title);
-      for (i = 0; i < local_n; i++)
+      for (i = 0; i < n; i++)
          printf("%f ", b[i]);
       printf("\n");
       free(b);
    } else {
-      Check_for_error(local_ok, fname, "Can't allocate temporary vector",
+      Check_for_error(local_ok, fname, "Can't allocate temporary vector", 
             comm);
       MPI_Gather(local_b, local_n, MPI_DOUBLE, b, local_n, MPI_DOUBLE, 0,
          comm);
@@ -309,9 +329,9 @@ void Print_vector(
  * Out arg:   local_z:  local storage for the sum of the two vectors
  */
 void Parallel_vector_sum(
-      double  local_x[]  /* in  */,
-      double  local_y[]  /* in  */,
-      double  local_z[]  /* out */,
+      double  local_x[]  /* in  */, 
+      double  local_y[]  /* in  */, 
+      double  local_z[]  /* out */, 
       int     local_n    /* in  */) {
    int local_i;
 
