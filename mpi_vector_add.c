@@ -58,11 +58,10 @@ int main(void) {
    MPI_Comm_rank(comm, &my_rank);               // Obtiene el rango del proceso
 
    //n = 100000;                                  // Ejercicio 2: Crear dos vectores de al menos 100,000 elementos generados de forma aleatoria
-   n = 200000000;                               // 200,000,000 para lograr que se tarde 5 seg aproximadamente
+   Read_n(&n, &local_n, my_rank, comm_sz, comm);                        // Se lee el tamaño de los vectores (n) y se distribuye entre los procesos
+
 
    if (my_rank == 0) start = MPI_Wtime();
-
-   Read_n(&n, &local_n, my_rank, comm_sz, comm);                        // Se lee el tamaño de los vectores (n) y se distribuye entre los procesos
 
    Allocate_vectors(&local_x, &local_y, &local_z, local_n, comm);       // Se le asigna memoria a los vectores locales
 
@@ -72,6 +71,7 @@ int main(void) {
    Parallel_vector_sum(local_x, local_y, local_z, local_n);             // Se suman los vectores x e y y se guarda el resultado en el vector z
 
    if (my_rank == 0) elapsed = MPI_Wtime() - start;
+   
 
    // SE COMBINAN LOS VECTORES LOCALES EN UNO SOLO DESPUES DE HABER SUMADO
    Allocate_vectors(&x, &y, &z, n, comm);       // Se le asigna memoria a los vectores globales
@@ -163,15 +163,18 @@ void Check_for_error(
  * Errors:    n should be positive and evenly divisible by comm_sz
  */
 void Read_n(
-      int*      n_p        /* out */, 
-      int*      local_n_p  /* out */, 
-      int       my_rank    /* in  */, 
+      int*      n_p        /* out */,
+      int*      local_n_p  /* out */,
+      int       my_rank    /* in  */,
       int       comm_sz    /* in  */,
       MPI_Comm  comm       /* in  */) {
-
    int local_ok = 1;
    char *fname = "Read_n";
-   
+
+   if (my_rank == 0) {
+      printf("What's the order of the vectors?\n");
+      scanf("%d", n_p);
+   }
    MPI_Bcast(n_p, 1, MPI_INT, 0, comm);
    if (*n_p <= 0 || *n_p % comm_sz != 0) local_ok = 0;
    Check_for_error(local_ok, fname,

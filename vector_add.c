@@ -30,12 +30,11 @@ int main(void) {
    int n;
    double *x, *y, *z;                  // X e Y son los vectores de entrada y Z es el vector de salida
    
-   //n = 100000;                         // Ejercicio 2: Crear dos vectores de al menos 100,000 elementos generados de forma aleatoria
-   n = 200000000;                        // 200,000,000 para lograr que se tarde 5 seg aproximadamente
-
-   double start = clock();
-
+   //n = 100000;                       // Ejercicio 2: Crear dos vectores de al menos 100,000 elementos generados de forma aleatoria
    Read_n(&n);                         // Se lee el tamaño de los vectores
+
+   
+   double start = clock();
 
    Allocate_vectors(&x, &y, &z, n);    // Se le asigna memoria a los vectores. 
    
@@ -47,6 +46,7 @@ int main(void) {
    double finish = clock();
    double elapsed = (double)(finish - start) / CLOCKS_PER_SEC;
 
+   
    printf("Size of vectors: %d\n", n); // Se imprime el tamaño de los vectores (n)
 
    printf("X\t\t|\tY\t\t|\tZ (Resultado)\n\n");            // Se imprimen los vectores
@@ -77,11 +77,14 @@ int main(void) {
  * Errors:    If n <= 0, the program terminates
  */
 void Read_n(int* n_p /* out */) {
+   printf("What's the order of the vectors?\n");
+   scanf("%d", n_p);
    if (*n_p <= 0) {
       fprintf(stderr, "Order should be positive\n");
       exit(-1);
    }
 }  /* Read_n */
+
 
 /*---------------------------------------------------------------------
  * Function:  Allocate_vectors
