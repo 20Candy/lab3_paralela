@@ -5,10 +5,10 @@
  *           illustrates the use of MPI_Scatter and MPI_Gather.
  *
  * Compile:  mpicc -g -Wall -o mpi_vector_add mpi_vector_add.c
- * Run:      mpiexec -n <comm_sz> ./vector_add
+ * Run:      mpiexec -n <comm_sz> ./mpi_vector_add
  *
  * Input:    The order of the vectors, n, and the vectors x and y
- * Output:   The sum vector z = x+y
+ * Output:   The point product of x and y, the mult. x*scalar and y*scalar
  *
  * Notes:     
  * 1.  The order of the vectors, n, should be evenly divisible
@@ -27,17 +27,12 @@
 #include <mpi.h>
 #include <time.h>
 
-/* Prototipos de funciones adicionales */
-double Parallel_vector_dot_product(double local_x[], double local_y[], int local_n, MPI_Comm comm);
-void Parallel_scalar_multiply(double local_x[], double scalar, int local_n);
-
-
 void Check_for_error(int local_ok, char fname[], char message[], 
       MPI_Comm comm);
-void Read_n(int* n_p, int* local_n_p, int my_rank, int comm_sz, 
+void Read_n(int* n_p, int* local_n_p, int* escalar, int my_rank, int comm_sz, 
       MPI_Comm comm);
 void Allocate_vectors(double** local_x_pp, double** local_y_pp,
-      double** local_z_pp, int local_n, MPI_Comm comm);
+      double** local_z_pp, double **local_a_pp, int local_n, MPI_Comm comm);
 void Read_vector(double local_a[], int local_n, int n, char vec_name[], 
       int my_rank, MPI_Comm comm);
 void Print_vector(double local_b[], int local_n, int n, char title[], 
@@ -45,86 +40,96 @@ void Print_vector(double local_b[], int local_n, int n, char title[],
 void Parallel_vector_sum(double local_x[], double local_y[], 
       double local_z[], int local_n);
 
+/* Prototipos de funciones adicionales */
+double Parallel_vector_dot_product(double local_x[], double local_y[], int local_n, MPI_Comm comm);
+void Parallel_scalar_multiply(double local_x[], double local_z[], double scalar, int local_n);
+
+
 
 /*-------------------------------------------------------------------*/
 int main(void) {
-    double start, finish, elapsed;
-    start = clock();
+   int n, local_n, escalar;                     // n = tamaño de los vectores, local_n = tamaño de los vectores locales, escalar = valor del escalar
+   int comm_sz, my_rank;                        // comm_sz = número de procesos, my_rank = rango del proceso
+   MPI_Comm comm;     
 
-   int n, local_n;
-   int comm_sz, my_rank;
-   double *local_x, *local_y, *local_z;
-   MPI_Comm comm;
+   double start, elapsed;
 
-   MPI_Init(NULL, NULL);
+   double *local_x, *local_y, *local_z, *local_a;     // vectores locales
+   double *x, *y, *z, *a;                             // VECTORES GLOBALES. Se utiliza para combinar los vectores locales.
+
+   MPI_Init(NULL, NULL);                              // Inicializa el ambiente de MPI
    comm = MPI_COMM_WORLD;
-   MPI_Comm_size(comm, &comm_sz);
-   MPI_Comm_rank(comm, &my_rank);
+   MPI_Comm_size(comm, &comm_sz);                     // Obtiene el número de procesos
+   MPI_Comm_rank(comm, &my_rank);                     // Obtiene el rango del proceso
 
-   Read_n(&n, &local_n, my_rank, comm_sz, comm);
-#  ifdef DEBUG
-   printf("Proc %d > n = %d, local_n = %d\n", my_rank, n, local_n);
-#  endif
-   Allocate_vectors(&local_x, &local_y, &local_z, local_n, comm);
+   //n = 100000;                                      // Ejercicio 2: Crear dos vectores de al menos 100,000 elementos generados de forma aleatoria
+   Read_n(&n, &local_n, &escalar, my_rank, comm_sz, comm);                        // Se lee el tamaño de los vectores (n) y el valor del escalar y se distribuye entre los procesos
+
+
+   if (my_rank == 0) start = MPI_Wtime();
+
+
+   Allocate_vectors(&local_x, &local_y, &local_z, &local_a, local_n, comm);         // Se le asigna memoria a los vectores locales
+   Allocate_vectors(&x, &y, &z, &a, n, comm);                                       // Se le asigna memoria a los vectores globales
+
+   Read_vector(local_x, local_n, n, "x", my_rank, comm);                // Se llenan los vectores con números aleatorios
+   Read_vector(local_y, local_n, n, "y", my_rank, comm);                // Se llenan los vectores con números aleatorios
    
-   Read_vector(local_x, local_n, n, "x", my_rank, comm);
+   // Se calcula el producto punto de los vectores locales
+   double local_dot_product = Parallel_vector_dot_product(local_x, local_y, local_n, comm);
+
+   // Multiplicar vectores por un escalar
+   Parallel_scalar_multiply(local_x, local_z, escalar, local_n);
+   Parallel_scalar_multiply(local_y, local_a, escalar, local_n);
+
+   // Se suman los vectores locales en uno solo
+   //Parallel_vector_sum(local_x, local_y, local_z, local_n); 
+
+   if (my_rank == 0) elapsed = MPI_Wtime() - start;
+
+
+   // SE COMBINAN LOS VECTORES LOCALES EN UNO SOLO DESPUES DE HABER SUMADO
+   MPI_Gather(local_x, local_n, MPI_DOUBLE, x, local_n, MPI_DOUBLE, 0, comm);
+   MPI_Gather(local_y, local_n, MPI_DOUBLE, y, local_n, MPI_DOUBLE, 0, comm);
+   MPI_Gather(local_z, local_n, MPI_DOUBLE, z, local_n, MPI_DOUBLE, 0, comm);
+   MPI_Gather(local_a, local_n, MPI_DOUBLE, a, local_n, MPI_DOUBLE, 0, comm);
    
-   Parallel_vector_sum(local_x, local_y, local_z, local_n);
-//    Print_vector(local_z, local_n, n, "The sum is", my_rank, comm); //NOTA: Se comenta porque da segmentation fault
+   if (my_rank == 0){
+
+      printf("Size of vectors: %d\n", n); // Se imprime el tamaño de los vectores (n)
+
+      printf("\nProducto punto = %f\n", local_dot_product);
+
+      printf("\nVector X * %d = \n", escalar);            
+      printf("\nX\t\t|\tZ (Resultado)\n\n");            // Se imprimen los vectores
+
+      for (int i = 0; i < n; i++) {
+            printf("%f\t|\t%f\n", x[i], z[i]);
+      }
 
 
-    // Calcula el producto punto
-    double local_dot_product = Parallel_vector_dot_product(local_x, local_y, local_n, comm);
-    if (my_rank == 0) {
-        printf("Producto punto = %f\n", local_dot_product);
-    }
+      printf("\nVector Y * %d = \n", escalar);
+      printf("\nY\t\t|\tA (Resultado)\n\n");            // Se imprimen los vectores
 
-    // Multiplicar vectores por un escalar
-    double scalar = 3.0; // ejemplo
-    Parallel_scalar_multiply(local_x, scalar, local_n);
-    Parallel_scalar_multiply(local_y, scalar, local_n);
+      for (int i = 0; i < n; i++) {
+            printf("%f\t|\t%f\n", y[i], a[i]);
+      }
 
+      printf("\nTime elapsed: %f seconds\n", elapsed);
 
-    printf("\nThe first ten elements of x are: \n");
-    for (int i = 0; i < 10; i++) {
-     printf("%f ", local_x[i]);
-    }
+   }
 
-    printf("\nThe first ten elements of y are: \n");
-    for (int i = 0; i < 10; i++) {
-     printf("%f ", local_y[i]);
-    }
-
-    printf("\nThe first ten elements of z are: \n");
-    for (int i = 0; i < 10; i++) {
-     printf("%f ", local_z[i]);
-    }
-
-    printf("The last ten elements of x are: \n");
-    for (int i = local_n-10; i < local_n; i++) {
-     printf("%f ", local_x[i]);
-    }
-
-    printf("\nThe last ten elements of y are: \n");
-    for (int i = local_n-10; i < local_n; i++) {
-     printf("%f ", local_y[i]);
-    }
-
-    printf("\nThe last ten elements of z are: \n");
-    for (int i = local_n-10; i < local_n; i++) {
-     printf("%f ", local_z[i]);
-    }
-
+   free(x);
+   free(y);
+   free(z);
+   free(a);
+   
    free(local_x);
    free(local_y);
    free(local_z);
+   free(local_a);
 
    MPI_Finalize();
-
-    finish = clock();
-    elapsed = (double)(finish - start) / CLOCKS_PER_SEC;
-
-    printf("\nTime elapsed: %f seconds\n", elapsed);
 
    return 0;
 }  /* main */
@@ -181,24 +186,34 @@ void Check_for_error(
  * Errors:    n should be positive and evenly divisible by comm_sz
  */
 void Read_n(
-      int*      n_p        /* out */, 
-      int*      local_n_p  /* out */, 
-      int       my_rank    /* in  */, 
+      int*      n_p        /* out */,
+      int*      local_n_p  /* out */,
+      int*      escalar   /* out */,
+      int       my_rank    /* in  */,
       int       comm_sz    /* in  */,
       MPI_Comm  comm       /* in  */) {
    int local_ok = 1;
    char *fname = "Read_n";
-   
+
    if (my_rank == 0) {
-    *n_p = 10000000;
-    //   printf("What's the order of the vectors?\n");
-    //   scanf("%d", n_p);
+      printf("What's the order of the vectors (tamaño de los vectores)?: ");
+      fflush(stdout);
+      scanf("%d", n_p);
+
+      printf("What's the scalar (escalar)?: ");
+      fflush(stdout);
+      scanf("%d", escalar);
    }
+
    MPI_Bcast(n_p, 1, MPI_INT, 0, comm);
+   MPI_Bcast(escalar, 1, MPI_INT, 0, comm);
+
    if (*n_p <= 0 || *n_p % comm_sz != 0) local_ok = 0;
    Check_for_error(local_ok, fname,
          "n should be > 0 and evenly divisible by comm_sz", comm);
+         
    *local_n_p = *n_p/comm_sz;
+
 }  /* Read_n */
 
 
@@ -216,6 +231,7 @@ void Allocate_vectors(
       double**   local_x_pp  /* out */, 
       double**   local_y_pp  /* out */,
       double**   local_z_pp  /* out */, 
+      double**   local_a_pp  /* out */,
       int        local_n     /* in  */,
       MPI_Comm   comm        /* in  */) {
    int local_ok = 1;
@@ -224,9 +240,10 @@ void Allocate_vectors(
    *local_x_pp = malloc(local_n*sizeof(double));
    *local_y_pp = malloc(local_n*sizeof(double));
    *local_z_pp = malloc(local_n*sizeof(double));
+   *local_a_pp = malloc(local_n*sizeof(double));
 
    if (*local_x_pp == NULL || *local_y_pp == NULL || 
-       *local_z_pp == NULL) local_ok = 0;
+       *local_z_pp == NULL || *local_a_pp == NULL) local_ok = 0;
    Check_for_error(local_ok, fname, "Can't allocate local vector(s)", 
          comm);
 }  /* Allocate_vectors */
@@ -249,6 +266,9 @@ void Allocate_vectors(
  * Note: 
  *    This function assumes a block distribution and the order
  *   of the vector evenly divisible by comm_sz.
+ * 
+ *  This Function was changed by Stefano Aragoni and Carol Arévalo to generate random numbers instead of reading them from stdin.
+ *  MPI_Scatter was removed in order to avoid the distribution of the vector. Each process generates its own vector.
  */
 void Read_vector(
       double    local_a[]   /* out */, 
@@ -258,28 +278,15 @@ void Read_vector(
       int       my_rank     /* in  */, 
       MPI_Comm  comm        /* in  */) {
 
-   double* a = NULL;
-   int i;
-   int local_ok = 1;
-   char* fname = "Read_vector";
+   //if (my_rank == 0) {            // Antes solo el proceso con Rank=0 llenaba el array de tamaño n.
+                                    // Esto se cambió para que cada proceso genere su propio vector, así 
+                                    // permitiendo que se llenen varios vectores locales a la vez. 
 
-   if (my_rank == 0) {
-      a = malloc(n*sizeof(double));
-      if (a == NULL) local_ok = 0;
-      Check_for_error(local_ok, fname, "Can't allocate temporary vector", 
-            comm);
-    //   printf("Enter the vector %s\n", vec_name);
-      for (i = 0; i < n; i++)
-         a[i] = rand() % 1000;
-      MPI_Scatter(a, local_n, MPI_DOUBLE, local_a, local_n, MPI_DOUBLE, 0,
-         comm);
-      free(a);
-   } else {
-      Check_for_error(local_ok, fname, "Can't allocate temporary vector", 
-            comm);
-      MPI_Scatter(a, local_n, MPI_DOUBLE, local_a, local_n, MPI_DOUBLE, 0,
-         comm);
-   }
+   int i;
+   for (i = 0; i < local_n; i++)
+      local_a[i] = rand() % 10;   // Cada proceso almacena los números directamente en el vector local. Esto evita que solo el proceso 0
+                                    // llene el vector y luego lo distribuya a los demás procesos. Es más rápido.
+
 }  /* Read_vector */  
 
 
@@ -354,23 +361,33 @@ void Parallel_vector_sum(
       local_z[local_i] = local_x[local_i] + local_y[local_i];
 }  /* Parallel_vector_sum */
 
+
+
+/*-------------------------------------------------------------------*/
 // Implementación de las funciones adicionales
 
+
+// Función que calcula el producto punto de dos vectores
 double Parallel_vector_dot_product(double local_x[], double local_y[], int local_n, MPI_Comm comm) {
     double local_dot = 0.0;
-    for (int i = 0; i < local_n; i++) {
-        local_dot += local_x[i] * local_y[i];
-    }
+    
+    int local_i;
+
+    for (local_i = 0; local_i < local_n; local_i++)
+      local_dot += local_x[local_i] * local_y[local_i];
+
     double global_dot;
+    // Se suman los productos punto de cada proceso
     MPI_Reduce(&local_dot, &global_dot, 1, MPI_DOUBLE, MPI_SUM, 0, comm);
+    MPI_Bcast(&global_dot, 1, MPI_DOUBLE, 0, comm);
     return global_dot;
 }
 
-void Parallel_scalar_multiply(double local_x[], double scalar, int local_n) {
-    for (int i = 0; i < local_n; i++) {
-        local_x[i] *= scalar;
-    }
+// Función que calcula el producto escalar de un vector
+void Parallel_scalar_multiply(double local_x[], double local_z[], double scalar, int local_n) {
+   // Cada proceso multiplica su parte del vector por el escalar
+   int local_i;
+
+   for (local_i = 0; local_i < local_n; local_i++)
+      local_z[local_i] = local_x[local_i] * scalar;
 }
-
-
-
