@@ -117,6 +117,8 @@ void Read_vector(
       int     n           /* in  */, 
       char    vec_name[]  /* in  */) {
 
+   srand((unsigned int)time(NULL));
+
    int i;
    for (i = 0; i < n; i++)
       a[i] = rand() % 1000;            // Ejercicio 2: Se genera un número aleatorio entre 0 y 1000 para cada elemento del vector

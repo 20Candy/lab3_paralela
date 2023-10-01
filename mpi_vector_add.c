@@ -227,6 +227,9 @@ void Allocate_vectors(
  * Note: 
  *    This function assumes a block distribution and the order
  *   of the vector evenly divisible by comm_sz.
+ * 
+ *  This Function was changed by Stefano Aragoni and Carol Arévalo to generate random numbers instead of reading them from stdin.
+ *  MPI_Scatter was removed in order to avoid the distribution of the vector. Each process generates its own vector.
  */
 void Read_vector(
       double    local_a[]   /* out */, 
@@ -236,28 +239,17 @@ void Read_vector(
       int       my_rank     /* in  */, 
       MPI_Comm  comm        /* in  */) {
 
-   double* a = NULL;
-   int i;
-   int local_ok = 1;
-   char* fname = "Read_vector";
+   //if (my_rank == 0) {            // Antes solo el proceso con Rank=0 llenaba el array de tamaño n.
+                                    // Esto se cambió para que cada proceso genere su propio vector, así 
+                                    // permitiendo que se llenen varios vectores locales a la vez. 
 
-   if (my_rank == 0) {
-      a = malloc(n*sizeof(double));
-      if (a == NULL) local_ok = 0;
-      Check_for_error(local_ok, fname, "Can't allocate temporary vector", 
-            comm);
-    //   printf("Enter the vector %s\n", vec_name);
-      for (i = 0; i < n; i++)
-         a[i] = rand() % 1000;
-      MPI_Scatter(a, local_n, MPI_DOUBLE, local_a, local_n, MPI_DOUBLE, 0,
-         comm);
-      free(a);
-   } else {
-      Check_for_error(local_ok, fname, "Can't allocate temporary vector", 
-            comm);
-      MPI_Scatter(a, local_n, MPI_DOUBLE, local_a, local_n, MPI_DOUBLE, 0,
-         comm);
-   }
+   srand((unsigned int)time(NULL));
+
+   int i;
+   for (i = 0; i < local_n; i++)
+      local_a[i] = rand() % 1000;   // Cada proceso almacena los números directamente. Esto evita que solo el proceso 0
+                                    // llene el vector y luego lo distribuya a los demás procesos. Es más rápido.
+
 }  /* Read_vector */  
 
 
