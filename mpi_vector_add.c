@@ -47,6 +47,8 @@ int main(void) {
    int comm_sz, my_rank;                        // comm_sz = número de procesos, my_rank = rango del proceso
    MPI_Comm comm;     
 
+   double start, elapsed;
+
    double *local_x, *local_y, *local_z;         // vectores locales
    double *x, *y, *z;                           // VECTORES GLOBALES. Se utiliza para combinar los vectores locales.
 
@@ -58,7 +60,7 @@ int main(void) {
    //n = 100000;                                  // Ejercicio 2: Crear dos vectores de al menos 100,000 elementos generados de forma aleatoria
    n = 200000000;                               // 200,000,000 para lograr que se tarde 5 seg aproximadamente
 
-   double start = MPI_Wtime();
+   if (my_rank == 0) start = MPI_Wtime();
 
    Read_n(&n, &local_n, my_rank, comm_sz, comm);                        // Se lee el tamaño de los vectores (n) y se distribuye entre los procesos
 
@@ -69,8 +71,7 @@ int main(void) {
    
    Parallel_vector_sum(local_x, local_y, local_z, local_n);             // Se suman los vectores x e y y se guarda el resultado en el vector z
 
-   double finish = MPI_Wtime();
-   double elapsed = finish - start;
+   if (my_rank == 0) elapsed = MPI_Wtime() - start;
 
    // SE COMBINAN LOS VECTORES LOCALES EN UNO SOLO DESPUES DE HABER SUMADO
    Allocate_vectors(&x, &y, &z, n, comm);       // Se le asigna memoria a los vectores globales

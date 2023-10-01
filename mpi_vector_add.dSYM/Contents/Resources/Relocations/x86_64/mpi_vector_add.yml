@@ -2,12 +2,12 @@
 triple:          'x86_64-apple-darwin'
 binary-path:     mpi_vector_add
 relocations:
-  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100003690, symSize: 0x220 }
-  - { offsetInCU: 0x57, offset: 0x57, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100003690, symSize: 0x220 }
-  - { offsetInCU: 0x13A, offset: 0x13A, size: 0x8, addend: 0x0, symName: _Read_n, symObjAddr: 0x220, symBinAddr: 0x1000038B0, symSize: 0xA0 }
-  - { offsetInCU: 0x1B2, offset: 0x1B2, size: 0x8, addend: 0x0, symName: _Allocate_vectors, symObjAddr: 0x2C0, symBinAddr: 0x100003950, symSize: 0xC0 }
-  - { offsetInCU: 0x22A, offset: 0x22A, size: 0x8, addend: 0x0, symName: _Read_vector, symObjAddr: 0x380, symBinAddr: 0x100003A10, symSize: 0x150 }
-  - { offsetInCU: 0x2CC, offset: 0x2CC, size: 0x8, addend: 0x0, symName: _Parallel_vector_sum, symObjAddr: 0x4D0, symBinAddr: 0x100003B60, symSize: 0x60 }
-  - { offsetInCU: 0x32E, offset: 0x32E, size: 0x8, addend: 0x0, symName: _Print_vector, symObjAddr: 0x530, symBinAddr: 0x100003BC0, symSize: 0x170 }
-  - { offsetInCU: 0x3DB, offset: 0x3DB, size: 0x8, addend: 0x0, symName: _Check_for_error, symObjAddr: 0x6A0, symBinAddr: 0x100003D30, symSize: 0xA3 }
+  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100003620, symSize: 0x2E0 }
+  - { offsetInCU: 0x57, offset: 0x57, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100003620, symSize: 0x2E0 }
+  - { offsetInCU: 0x165, offset: 0x165, size: 0x8, addend: 0x0, symName: _Read_n, symObjAddr: 0x2E0, symBinAddr: 0x100003900, symSize: 0xA0 }
+  - { offsetInCU: 0x1DD, offset: 0x1DD, size: 0x8, addend: 0x0, symName: _Allocate_vectors, symObjAddr: 0x380, symBinAddr: 0x1000039A0, symSize: 0xC0 }
+  - { offsetInCU: 0x255, offset: 0x255, size: 0x8, addend: 0x0, symName: _Read_vector, symObjAddr: 0x440, symBinAddr: 0x100003A60, symSize: 0x150 }
+  - { offsetInCU: 0x2F7, offset: 0x2F7, size: 0x8, addend: 0x0, symName: _Parallel_vector_sum, symObjAddr: 0x590, symBinAddr: 0x100003BB0, symSize: 0x60 }
+  - { offsetInCU: 0x359, offset: 0x359, size: 0x8, addend: 0x0, symName: _Check_for_error, symObjAddr: 0x5F0, symBinAddr: 0x100003C10, symSize: 0xB0 }
+  - { offsetInCU: 0x3D1, offset: 0x3D1, size: 0x8, addend: 0x0, symName: _Print_vector, symObjAddr: 0x6A0, symBinAddr: 0x100003CC0, symSize: 0x163 }
 ...
