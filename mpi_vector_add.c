@@ -71,7 +71,7 @@ int main(void) {
    Parallel_vector_sum(local_x, local_y, local_z, local_n);             // Se suman los vectores x e y y se guarda el resultado en el vector z
 
    if (my_rank == 0) elapsed = MPI_Wtime() - start;
-   
+
 
    // SE COMBINAN LOS VECTORES LOCALES EN UNO SOLO DESPUES DE HABER SUMADO
    Allocate_vectors(&x, &y, &z, n, comm);       // Se le asigna memoria a los vectores globales
@@ -172,14 +172,19 @@ void Read_n(
    char *fname = "Read_n";
 
    if (my_rank == 0) {
-      printf("What's the order of the vectors?\n");
+      printf("What's the order of the vectors (tamaño de los vectores)?: ");
+      fflush(stdout);
       scanf("%d", n_p);
    }
+
    MPI_Bcast(n_p, 1, MPI_INT, 0, comm);
+
    if (*n_p <= 0 || *n_p % comm_sz != 0) local_ok = 0;
    Check_for_error(local_ok, fname,
          "n should be > 0 and evenly divisible by comm_sz", comm);
+         
    *local_n_p = *n_p/comm_sz;
+
 }  /* Read_n */
 
 
@@ -245,8 +250,6 @@ void Read_vector(
    //if (my_rank == 0) {            // Antes solo el proceso con Rank=0 llenaba el array de tamaño n.
                                     // Esto se cambió para que cada proceso genere su propio vector, así 
                                     // permitiendo que se llenen varios vectores locales a la vez. 
-
-   srand((unsigned int)time(NULL));
 
    int i;
    for (i = 0; i < local_n; i++)

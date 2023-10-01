@@ -77,7 +77,7 @@ int main(void) {
  * Errors:    If n <= 0, the program terminates
  */
 void Read_n(int* n_p /* out */) {
-   printf("What's the order of the vectors?\n");
+   printf("What's the order of the vectors (tamaño de los vectores)?: ");
    scanf("%d", n_p);
    if (*n_p <= 0) {
       fprintf(stderr, "Order should be positive\n");
@@ -119,8 +119,6 @@ void Read_vector(
       double  a[]         /* out */, 
       int     n           /* in  */, 
       char    vec_name[]  /* in  */) {
-
-   srand((unsigned int)time(NULL));
 
    int i;
    for (i = 0; i < n; i++)
