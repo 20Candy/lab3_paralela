@@ -26,6 +26,7 @@ Implementación de operaciones vectoriales utilizando el paradigma de programaci
 ## Correr el programa 🚀
 
 1. Programa 1
+
 a. Compilación
 
 ```shell
@@ -39,13 +40,14 @@ b. Ejecución
 
 
 2. Programa 2
+
 a. Compilación
 
 ```shell
   mpicc -g -Wall -o mpi_vector_add mpi_vector_add.c
 ```
 
-b. Compilación
+b. Ejecución
 ```shell
   mpiexec -n [NUMERO_DE_PROCESOS] ./mpi_vector_add
 ```
@@ -53,13 +55,14 @@ b. Compilación
 * Nota: Reemplaza [NUMERO_DE_PROCESOS] con el número de procesos que desees utilizar para la ejecución.
 
 3. Programa 3
+
 a. Compilación
 
 ```shell
   mpicc -g -Wall -o mpi_vector_add_2 mpi_vector_add_2.c
 ```
 
-b. Compilación
+b. Ejecución
 ```shell
   mpiexec -n [NUMERO_DE_PROCESOS] ./mpi_vector_add_2
 ```
